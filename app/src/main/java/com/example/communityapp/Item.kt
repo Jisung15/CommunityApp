@@ -5,6 +5,7 @@ data class Item(
     val heartImage: Int,
     val answerImage: Int,
     val idText: String,
+    val content: String,
     val heartCount: String,
     val answerCount: String
 )
