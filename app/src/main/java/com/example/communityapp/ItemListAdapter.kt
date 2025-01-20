@@ -7,9 +7,7 @@ import androidx.recyclerview.widget.ListAdapter
 import androidx.recyclerview.widget.RecyclerView
 import com.example.communityapp.databinding.CommuntiyTextSampleBinding
 
-class ItemListAdapter : ListAdapter<Item, ItemListAdapter.ItemViewHolder>(ItemDiffCallBack()) {
-
-    private var onItemLongClickListener: ((Int) -> Unit)? = null
+class ItemListAdapter(private val itemList: List<Item>, private val onItemLongClickListener: (Item) -> Unit) : ListAdapter<Item, ItemListAdapter.ItemViewHolder>(ItemDiffCallBack()) {
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ItemViewHolder {
         val binding = CommuntiyTextSampleBinding.inflate(LayoutInflater.from(parent.context), parent, false)
@@ -20,13 +18,9 @@ class ItemListAdapter : ListAdapter<Item, ItemListAdapter.ItemViewHolder>(ItemDi
         val item = getItem(position)
         holder.bind(item)
         holder.itemView.setOnLongClickListener {
-            onItemLongClickListener?.invoke(position)
+            onItemLongClickListener(item)
             true
         }
-    }
-
-    fun setOnItemLongClickListener(listener: (Int) -> Unit) {
-        onItemLongClickListener = listener
     }
 
     inner class ItemViewHolder(private val binding: CommuntiyTextSampleBinding) : RecyclerView.ViewHolder(binding.root) {

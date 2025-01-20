@@ -3,55 +3,64 @@ package com.example.communityapp
 import android.content.Intent
 import android.os.Bundle
 import android.widget.Toast
-import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
-import androidx.core.view.ViewCompat
-import androidx.core.view.WindowInsetsCompat
 import com.example.communityapp.databinding.ActivityCreatePostBinding
+import com.google.firebase.firestore.FirebaseFirestore
 
 class CreatePostActivity : AppCompatActivity() {
 
     private val binding by lazy { ActivityCreatePostBinding.inflate(layoutInflater) }
+    private val db = FirebaseFirestore.getInstance()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        enableEdgeToEdge()
         setContentView(binding.root)
-        ViewCompat.setOnApplyWindowInsetsListener(binding.main) { v, insets ->
-            val systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars())
-            v.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom)
-            insets
-        }
 
         binding.btnAddPost.setOnClickListener {
-            val title = binding.etPostTitle.text.toString()
+            val profileImage = R.drawable.ic_launcher_background
+            val heartImage = R.drawable.ic_launcher_background
+            val answerImage = R.drawable.ic_launcher_background
+            val idText = binding.etPostTitle.text.toString()
             val content = binding.etPostContent.text.toString()
+            val heartCount = "0"
+            val answerCount = "0"
 
-            if (title.isNotBlank() && content.isNotBlank()) {
-                showConfirmationDialog(title, content)
-            } else {
-                Toast.makeText(this, "제목과 내용을 입력 후 추가 해야 합니다.", Toast.LENGTH_SHORT).show()
-            }
+            showDialog(profileImage, heartImage, answerImage, idText, content, heartCount, answerCount)
         }
     }
 
-    private fun showConfirmationDialog(title: String, content: String) {
-        val dialogBuilder = AlertDialog.Builder(this)
-        dialogBuilder.setMessage("게시글을 추가하시겠습니까?")
+    private fun showDialog(profileImage: Int, heartImage: Int, answerImage: Int, idText: String, content: String, heartCount: String, answerCount: String) {
+        val builder = AlertDialog.Builder(this)
+        builder.setMessage("게시글을 추가하시겠습니까?")
             .setCancelable(false)
-            .setPositiveButton("추가") {_, _ ->
-                val result = Intent().apply {
-                    putExtra("POST_TITLE", title)
-                    putExtra("POST_CONTENT", content)
-                }
-                setResult(RESULT_OK, result)
+            .setPositiveButton("추가") { dialog, id ->
+                val item = Item (profileImage, heartImage, answerImage, idText, content, heartCount, answerCount)
+                savePostToFirestore(item)
+            }
+            .setNegativeButton("취소") { dialog, id ->
+                binding.etPostTitle.text.clear()
+                binding.etPostContent.text.clear()
                 finish()
             }
-            .setNegativeButton("취소") { dialog, _ ->
-                dialog.dismiss()
-            }
 
-        dialogBuilder.create().show()
+        builder.create()
+        builder.show()
+    }
+
+    private fun savePostToFirestore(item: Item) {
+        val postRef = db.collection("posts").document(item.idText)
+        postRef.set(item)
+            .addOnSuccessListener {
+                Toast.makeText(this, "게시글을 업로드하였습니다.", Toast.LENGTH_SHORT).show()
+
+                val intent = Intent()
+                intent.putExtra("newPost", item)
+                setResult(RESULT_OK, intent)
+                finish()
+            }
+            .addOnFailureListener { e ->
+                Toast.makeText(this, "에러 발생!: $e", Toast.LENGTH_SHORT).show()
+            }
     }
 }
